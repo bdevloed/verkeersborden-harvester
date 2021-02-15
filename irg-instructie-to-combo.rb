@@ -97,7 +97,7 @@ WHERE {
       instructions.each do |instruction|
         subInstructions << instruction.split(/[-+]/, -1)
       end
-        
+      # TODO - use parsed subInstructions
       statements = []
       if verkeersbord_iri
         instruction_uuid = Digest::MD5.hexdigest("#{uuid}#{verkeersbord_iri}")
