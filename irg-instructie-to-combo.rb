@@ -86,27 +86,44 @@ WHERE {
   def parse_row(index, row)
     uuid = row.first[1]
     if uuid
-      row_iri = RDF::URI("http://data.lblod.info/verkeersbordconcept-combinaties/#{uuid}")
+      row_iri = RDF::URI("http://data.lblod.info/measure-concept/#{uuid}")
       verkeersbord_code = row["verkeersbord_code"]
       verkeersbord_iri = find_verkeersbord(verkeersbord_code)
       verkeersbord_instructie = row["instructie"]
+      verkeersbord_aanvullende_instructie = row["aanvullende_instructie"]
+      measure_name = row["maatregel_naam"]
+      instruction_names = measure_name.to_s.split('/', -1)
+      subInstructions = []
+      instructions.each do |instruction|
+        subInstructions << instruction.split(/[-+]/, -1)
+      end
+        
       statements = []
       if verkeersbord_iri
-        maatregel_uuid = Digest::MD5.hexdigest("#{uuid}#{verkeersbord_iri}")
-        maatregel_concept = RDF::URI("http://data.lblod.info/maatregel-concepten/#{maatregel_uuid}")
-        statements << RDF::Statement.new( row_iri, RDF.type, LBLOD_MOW["Verkeersbordcombinatie"])
-        statements << RDF::Statement.new( row_iri, DC.hasPart, maatregel_concept )
+        instruction_uuid = Digest::MD5.hexdigest("#{uuid}#{verkeersbord_iri}")
+        instruction_concept = RDF::URI("http://data.lblod.info/instruction-concept/#{instruction_uuid}")
+        statements << RDF::Statement.new( row_iri, RDF.type, LBLOD_MOW["MeasureConcept"])
+        statements << RDF::Statement.new( row_iri, LBLOD_MOW['hasInstruction'], instruction_concept )
         statements << RDF::Statement.new( row_iri, MU.uuid, RDF::Literal.new(uuid))
-        statements << RDF::Statement.new( maatregel_concept, RDF.type, LBLOD_MOW["MaatregelConcept"])
-        statements << RDF::Statement.new( maatregel_concept, MU.uuid, maatregel_uuid)
-        statements << RDF::Statement.new( maatregel_concept, DC.description, RDF::Literal.new(verkeersbord_instructie))
-        statements << RDF::Statement.new( maatregel_concept, LBLOD_MOW['verkeersbordconcept'], verkeersbord_iri)
+        statements << RDF::Statement.new( instruction_concept, RDF.type, LBLOD_MOW["Instruction"])
+        statements << RDF::Statement.new( instruction_concept, MU.uuid, instruction_uuid)
+        statements << RDF::Statement.new( instruction_concept, DC.description, RDF::Literal.new(verkeersbord_instructie))
+        statements << RDF::Statement.new( instruction_concept, LBLOD_MOW['verkeersbordconcept'], verkeersbord_iri)
+
+        sub_instruction_uuid = Digest::MD5.hexdigest("#{verkeersbord_aanvullende_instructie}")
+        sub_instruction_concept = RDF::URI("http://data.lblod.info/instruction-concept/#{sub_instruction_uuid}")
+        statements << RDF::Statement.new( instruction_concept, LBLOD_MOW['hasSubInstruction'], sub_instruction_concept )
+        statements << RDF::Statement.new( sub_instruction_concept, RDF.type, LBLOD_MOW["Instruction"])
+        statements << RDF::Statement.new( sub_instruction_concept, MU.uuid, sub_instruction_uuid)
+        statements << RDF::Statement.new( sub_instruction_concept, DC.description, RDF::Literal.new(verkeersbord_aanvullende_instructie))
+        # statements << RDF::Statement.new( sub_instruction_concept, LBLOD_MOW['verkeersbordconcept'], verkeersbord_iri)
+
       else
-        puts "rij #{index} geen verkeersbord gevonden voor code #{verkeersbord_code.inspect}"
+        puts "row #{index} no road sign found for code #{verkeersbord_code.inspect}"
       end
       statements
     else
-      puts "rij #{index} heeft geen uuid"
+      puts "row #{index} has no uuid"
       []
     end
   end
