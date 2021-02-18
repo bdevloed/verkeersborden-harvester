@@ -18,7 +18,8 @@ class VerkeersbordenHarvester
   NIE =  RDF::Vocabulary.new("http://www.semanticdesktop.org/ontologies/2007/01/19/nie#")
   DBPEDIA = RDF::Vocabulary.new("http://dbpedia.org/ontology/")
   ADMS = RDF::Vocabulary.new('http://www.w3.org/ns/adms#')
-  SW = RDF::Vocabulary.new('http://www.w3.org/2003/06/sw-vocab-status/ns#')
+  SW = RDF::Vocab::VS
+
 
   MOB = RDF::Vocabulary.new("https://data.vlaanderen.be/ns/mobiliteit#")
   MANDAAT = RDF::Vocabulary.new("http://data.vlaanderen.be/ns/mandaat#")
