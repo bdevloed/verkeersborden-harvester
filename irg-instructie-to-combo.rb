@@ -1,32 +1,35 @@
 require 'linkeddata'
 require 'csv'
 require 'digest'
+require 'set'
 
 class InstructieHarvester
-  ORG = RDF::Vocab::ORG
-  FOAF = RDF::Vocab::FOAF
-  SKOS = RDF::Vocab::SKOS
   DC = RDF::Vocab::DC
+  FOAF = RDF::Vocab::FOAF
+  ORG = RDF::Vocab::ORG
   PROV = RDF::Vocab::PROV
   RDFS = RDF::Vocab::RDFS
-  REGORG = RDF::Vocabulary.new('https://www.w3.org/ns/regorg#')
+  SKOS = RDF::Vocab::SKOS
+  SV = RDF::Vocab::VS
+  ADMS = RDF::Vocabulary.new('http://www.w3.org/ns/adms#')
+  DBPEDIA = RDF::Vocabulary.new('http://dbpedia.org/ontology/')
   MU = RDF::Vocabulary.new('http://mu.semte.ch/vocabularies/core/')
   NFO = RDF::Vocabulary.new('http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#')
   NIE = RDF::Vocabulary.new('http://www.semanticdesktop.org/ontologies/2007/01/19/nie#')
-  DBPEDIA = RDF::Vocabulary.new('http://dbpedia.org/ontology/')
-  ADMS = RDF::Vocabulary.new('http://www.w3.org/ns/adms#')
-  SV = RDF::Vocabulary.new('http://www.w3.org/2003/06/sw-vocab-status/ns#')
+  REGORG = RDF::Vocabulary.new('https://www.w3.org/ns/regorg#')
 
-  MOB = RDF::Vocabulary.new('https://data.vlaanderen.be/ns/mobiliteit#')
-  MANDAAT = RDF::Vocabulary.new('http://data.vlaanderen.be/ns/mandaat#')
   BESLUIT = RDF::Vocabulary.new('http://data.vlaanderen.be/ns/besluit#')
   EXT = RDF::Vocabulary.new('http://mu.semte.ch/vocabularies/ext/')
   LBLOD_MOW = RDF::Vocabulary.new('http://data.lblod.info/vocabularies/mobiliteit/')
+  MANDAAT = RDF::Vocabulary.new('http://data.vlaanderen.be/ns/mandaat#')
+  MOB = RDF::Vocabulary.new('https://data.vlaanderen.be/ns/mobiliteit#')
+
 
   def initialize(input_verkeersborden, input_instructie)
     @repo = RDF::Graph.load(input_verkeersborden)
     @csv_path = input_instructie
     @output = 'output/verkeersborden-combinaties.ttl'
+    @codes_without_road_sign_concept = Set.new
   end
 
   def harvest
@@ -42,6 +45,7 @@ class InstructieHarvester
           index += 1
         end
         File.write(@output, graph.dump(:ttl), mode: 'w')
+        puts "Not found: #{@codes_without_road_sign_concept}"
       end
     rescue Exception => e
       puts "error on line #{index}"
@@ -70,6 +74,9 @@ class InstructieHarvester
                              }
                            })
     result = query.execute(@repo)
+    if result.length != 1
+      @codes_without_road_sign_concept.add(verkeersbord_code)
+    end
     result.first[:bord] if result.length === 1
   end
 
